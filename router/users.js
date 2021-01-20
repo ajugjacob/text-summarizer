@@ -1,8 +1,9 @@
 const router = require('express').Router();
 const bcrypt = require('bcrypt');
 var bodyParser = require('body-parser');
-let User = require('../models/users.model');
 
+let User = require('../models/users.model');
+const saltRounds = 10;
 var jsonParser = bodyParser.json();
 
 router.route('/').get((req, res) => {
@@ -13,19 +14,14 @@ router.route('/').get((req, res) => {
 
 router.route('/add').post(jsonParser, (req, res) => {
     const email = req.body.email;
-    const password = req.body.password;
+    var password = req.body.password;
 
-    bcrypt
-        .hash(password, BCRYPT_SALT_ROUNDS)
-        .then(function (hashedPassword) {
-            password = hashedPassword;
-        })
-        .catch(function (error) {
-            console.log('Error saving user: ');
-            console.log(error);
-        });
+    const salt = bcrypt.genSaltSync(saltRounds);
+    const hash = bcrypt.hashSync(password, salt);
 
-    const newUser = new User({ email, hashedPassword });
+    password = hash;
+
+    const newUser = new User({ email, password });
 
     newUser
         .save()
